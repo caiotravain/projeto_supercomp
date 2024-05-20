@@ -1,6 +1,3 @@
-//vrp problem 
-
-
 #include <iostream>
 #include <fstream>
 #include <vector>
@@ -12,24 +9,13 @@
 #include <climits>
 
 using namespace std;
-vector<vector<int>> gerartodasCombinacoes(vector<vector<int>> locations, int max_stop);
+vector<vector<int>> gerartodasCombinacoes(vector<vector<int>> locations, int max_stop, vector<int> places);
 bool verificarCapacidade(vector<int> &route, vector<vector<int>> &demands, int capacity);
 
 
 
 
-int countRouteCombinations(const vector<vector<int>>& allRoutes) {
-    int routeCount = allRoutes.size();
-    int combinationCount = 1;
 
-    // Calculate factorial of routeCount to get the number of combinations
-    for (int i = 2; i <= routeCount; ++i) {
-        combinationCount *= i;
-    }
-
-    return combinationCount;
-}
-//function resolverVRPComdemanda receive the locations, demands and capacity of the vehicle
 vector<int> resolverVRPComdemanda(vector<vector<int>> &locations, vector<vector<int>> &demands, int capacity, int max_stop) {
     //call the function gerartodasCombinacoes
     vector<int> bestRoute;
@@ -49,104 +35,27 @@ vector<int> resolverVRPComdemanda(vector<vector<int>> &locations, vector<vector<
     sort(places.begin(), places.end());
     vector<vector<int>> allRoutes;
     vector<vector<int>> allRoutes_best_route;
-    vector<vector<int>> original_locations = locations;
     int j = 0;
     vector<vector<int>> current_routes;
-    allRoutes = gerartodasCombinacoes(locations, max_stop);
+    allRoutes = gerartodasCombinacoes(locations, max_stop, places);
 
-    int count = countRouteCombinations(allRoutes);
-    // cout << "count " << count << endl;
+    menor_custo = INT_MAX;
 
-    // while (places.size() > 1){
-        allRoutes = gerartodasCombinacoes(locations, max_stop);
-        menor_custo = INT_MAX;
 
-        // cout << "all routes" << endl;
-        // for (int i = 0; i < allRoutes.size(); i++) {
-        //     for (int j = 0; j < allRoutes[i].size(); j++) {
-        //         cout << allRoutes[i][j] << " ";
-        //     }
-        //     cout << endl;
-        // }
-        // cout << endl;
-        
-        // cout << "locations" << endl;
-        // for (int i = 0; i < locations.size(); i++) {
-        //     for (int j = 0; j < locations[i].size(); j++) {
-        //         cout << locations[i][j] << " ";
-        //     }
-        //     cout << endl;
-        // }
-        // cout << endl;
 
-        for (int i = 0; i < allRoutes.size(); i++) {
+    for (int i = 0; i < allRoutes.size(); i++) {
 
-            if (verificarCapacidade(allRoutes[i], demands, capacity)) {
-                int custo = allRoutes[i][allRoutes[i].size() - 1];
-
-                if (custo < menor_custo) {
-                    menor_custo = custo;
-                    bestRoute = allRoutes[i];
-                }
-            }
-
-   
-        }
-
-        allRoutes_best_route.push_back(bestRoute);
-        //remove the places that are already visited
-        for (int i = 0; i < bestRoute.size(); i++) {
-            if (bestRoute[i] != 0) {
-                places.erase(remove(places.begin(), places.end(), bestRoute[i]), places.end());
-            }
-        }
-        //remove from locations the places that are not in the places list
-        for (int i = 0; i < locations.size(); i++) {
-            if (find(places.begin(), places.end(), locations[i][0]) == places.end() || find(places.begin(), places.end(), locations[i][1]) == places.end()) {
-                locations.erase(locations.begin() + i);
-                i --;
+        if (verificarCapacidade(allRoutes[i], demands, capacity)) {
+            int custo = allRoutes[i][allRoutes[i].size() - 1];
+            if (custo < menor_custo) {
+                menor_custo = custo;
+                bestRoute = allRoutes[i];
             }
         }
 
-        // cout << "places" << endl;
-        // for (int i = 0; i < places.size(); i++) {
-        //     cout << places[i] << " ";
-        // }
-        // cout << endl;
-        // cout << "new locations" << endl;
-        // for (int i = 0; i < locations.size(); i++) {
-        //     cout << locations[i][0] << " " << locations[i][1] << " " << locations[i][2] << endl;
-        // }
-        // cout << endl;
-        j++;
-        // cout << "Route " << j << ": ";
-        // for (int i = 0; i < bestRoute.size(); i++) {
-        //     cout << bestRoute[i] << " ";
-        // }
-        // cout << endl;
-        
-        
-    // }
-    
 
-    // cout << "best routes" << endl;
-    // for (int i = 0; i < allRoutes_best_route.size(); i++) {
-    //     for (int j = 0; j < allRoutes_best_route[i].size(); j++) {
-    //         cout << allRoutes_best_route[i][j] << " ";
-    //     }
-    //     cout << endl;
-    // }
-    // cout << endl;
-
-
-    //count all possible combinations of routes groups present in allRoutes
- 
-
-
-
-
-
-    // cout << "Melhor rota: ";
+    }
+    allRoutes_best_route.push_back(bestRoute);
     return bestRoute ;
 
 }
@@ -166,24 +75,27 @@ int find_cost_back(int place, vector<vector<int>>&locations) {
 
 // Function to perform DFS and find all paths from the origin to the destination
 void dfs(int current, int destination, unordered_map<int, vector<pair<int, int>>>& graph,
-         vector<int>& path, vector<vector<int>>& allPaths, unordered_set<int>& visited, vector<vector<int>> &locations,int weight = 0, int max_stop = 5, int ja_foi = 0) {
-    // If the current node is the destination, add the path to the result
-    if (current == destination && path.size() > 1){
+         vector<int>& path, vector<vector<int>>& allPaths, unordered_set<int>& visited, vector<vector<int>> &locations,int weight = 0, int max_stop = 5, int ja_foi = 0, vector<int> places = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9}) {
+    // If the current node is the destination, and all nodes have been visited, then add the path to the list of all paths
+    int visited_all = 1;
+    //if all nodes have been visited and the current node is the destination, add the path to the list of all paths
+    for (int i = 0; i < places.size(); i++) {
+        if (visited.find(places[i]) == visited.end()) {
+            visited_all = 0;
+            break;
+        }
+    }
+        
+
+    if (current == destination && path.size() > 1 && visited_all == 1) {
         int weight_back_to_origin = find_cost_back(current, locations);
         //append the weight of the path
         path.push_back(weight+weight_back_to_origin);
         allPaths.push_back(path);
         path.pop_back();
     }
-    if (path.size() > max_stop) {
-        return;
-    }
-    if (ja_foi == 1) {
-        return;
-    }
-
-    // Mark the current node as visited
-    if (path.size() > 1  )
+   
+    if (path.size() > 1 && current != 0)
     {
     visited.insert(current);
     }
@@ -192,7 +104,7 @@ void dfs(int current, int destination, unordered_map<int, vector<pair<int, int>>
     for (const auto& neighbor : graph[current]) {
         if (visited.find(neighbor.first) == visited.end()) {
             path.push_back(neighbor.first);
-            dfs(neighbor.first, destination, graph, path, allPaths, visited, locations,weight + neighbor.second, max_stop, ja_foi);
+            dfs(neighbor.first, destination, graph, path, allPaths, visited, locations,weight + neighbor.second, max_stop, ja_foi,places);
             path.pop_back();
         }
     }
@@ -200,6 +112,8 @@ void dfs(int current, int destination, unordered_map<int, vector<pair<int, int>>
     // Remove the current node from visited set to allow other paths
     visited.erase(current);
 }
+
+
 
 // Function to find all paths from the origin to the destination
 vector<vector<int>> findAllPaths(int origin, int destination, const vector<Edge>& edges, vector<vector<int>> &locations, int max_stop = 5) {
@@ -220,16 +134,37 @@ vector<vector<int>> findAllPaths(int origin, int destination, const vector<Edge>
 
     // Set to keep track of visited nodes
     unordered_set<int> visited;
+    vector<int> places;
+    for (int i = 0; i < locations.size(); i++) {
+        if (find(places.begin(), places.end(), locations[i][0]) != places.end()) {
+            continue;
+        }
+        if (locations[i][0] == 0) {
+            continue;
+        }
+        
+        places.push_back(locations[i][0]);
+        if (find(places.begin(), places.end(), locations[i][1]) != places.end()) {
+            continue;
+        }
+        if (locations[i][1] == 0) {
+            continue;
+        }
+
+        places.push_back(locations[i][1]);
+    }
+    sort(places.begin(), places.end());
 
     // Perform DFS to find all paths from origin to destination
-    dfs(origin, destination, graph, path, allPaths, visited,locations, 0, max_stop  );
+    dfs(origin, destination, graph, path, allPaths, visited,locations, 0, max_stop,0, places  );
+    vector<int> current_combination;
 
     return allPaths;
 }
 
 
 //function gerartodasCombinacoes receive the locations only and return all the possible routes
-vector<vector<int>> gerartodasCombinacoes(vector<vector<int>> locations, int max_stop) {
+vector<vector<int>> gerartodasCombinacoes(vector<vector<int>> locations, int max_stop, vector<int> places) {
  vector<vector<int>> allRoutes;
     vector<int> currentRoute;
     int max_routes = 0;
@@ -239,10 +174,7 @@ vector<vector<int>> gerartodasCombinacoes(vector<vector<int>> locations, int max
     for (int i = 0; i < locations.size(); i++) {
         edges.push_back({locations[i][0], locations[i][1], locations[i][2]});
     }
-    // print the edges
-    // for (int i = 0; i < edges.size(); i++) {
-    //     cout << get<0>(edges[i]) << " " << get<1>(edges[i]) << " " << get<2>(edges[i]) << endl;
-    // }
+
     vector<int> all_origins;
     vector<int> all_destinations;
     for (int i = 0; i < locations.size(); i++) {
@@ -262,26 +194,15 @@ vector<vector<int>> gerartodasCombinacoes(vector<vector<int>> locations, int max
         
     }
     //find all paths from all origins to all destinations
-    for (int i = 0; i < all_origins.size(); i++) {
         for (int j = 0; j < all_destinations.size(); j++) {
-            if (all_origins[i] == all_destinations[j]) {
-                continue;
-            }
-            // vector<vector<int>> paths = findAllPaths(all_origins[i], all_destinations[j], edges, locations);
-            // // cout << "Paths from " << all_origins[i] << " to " << all_destinations[j] << endl;
-            // // for (int i = 0; i < paths.size(); i++) {
-            // //     for (int j = 0; j < paths[i].size(); j++) {
-            // //         cout << paths[i][j] << " ";
-            // //     }
-            // //     cout << endl;
-            // // }
-            // for (const auto& path : paths) {
-            //     allRoutes.push_back(path);
-            // }
+            vector<vector<int>> allPaths = findAllPaths(0, all_destinations[j], edges, locations, max_stop);
+            //check if the route is valid(have all places), if not remove it
             
+            for (int k = 0; k < allPaths.size(); k++) {
+                allRoutes.push_back(allPaths[k]);
+            }
         }
-    }
-    allRoutes = findAllPaths(0, 0, edges, locations, max_stop);
+
 
     return allRoutes;
 }
@@ -299,27 +220,17 @@ bool verificarCapacidade(vector<int> &route, vector<vector<int>> &demands, int c
     int carga_atual = 0;
     for (int i = 0; i < route.size(); i++) {
         carga_atual = carga_atual + acha_valor(demands, route[i]);
-
-    }
-    if (carga_atual > capacity) {
+        if (route[i] == 0) {
+            carga_atual = 0;
+        }
+        if (carga_atual > capacity) {
         return false;
     }
+
+    }
+    
     return true;
 }
-
-
-//function calcularCusto receive the route
-// int calcularCusto(vector<int> &route) {
-//     int peso = 0;
-//     for (int i = 0; i < route.size() - 1; i++) {
-//         int x1 = locations[route[i]][0];
-//         int y1 = locations[route[i]][1];
-//         int x2 = locations[route[i + 1]][0];
-//         int y2 = locations[route[i + 1]][1];
-//         peso += sqrt(pow(x1 - x2, 2) + pow(y1 - y2, 2));
-//     }
-//     return peso;
-// }
 
 
 int main() {
@@ -357,14 +268,6 @@ int main() {
         demands.push_back(demand);
 
     }
-    // print the demands
-    for (int i = 0; i < demands.size(); i++) {
-        for (int j = 0; j < demands[i].size(); j++) {
-            // cout << demands[i][j] << " ";
-        }
-        // cout << endl;
-    }
-    // cout << endl;
     int arrestas;
     getline(file, line);
     stringstream ss1(line);
@@ -392,40 +295,39 @@ int main() {
     //call the function resolverVRPComdemanda
     vector<int> allRoutes_best_route;
     vector<int> already_visited;
-
-        // cout << "Rota " << i << ": ";
-        // cout << endl;
-
-        // for (int i = 0; i < locations.size(); i++) {
-        //     for (int j = 0; j < locations[i].size(); j++) {
-        //         cout << locations[i][j] << " ";
-        //     }
-        //     cout << endl;
-        // }
-        // cout << "new locations" << endl;
-        //     for (int i = 0; i < locations.size(); i++) {
-        //         for (int j = 0; j < locations[i].size(); j++) {
-        //             cout << locations[i][j] << " ";
-        //         }
-        //         cout << endl;
-        //     }
    allRoutes_best_route = resolverVRPComdemanda(locations, demands, capacity, max_stop);
 
-    cout << "Rota " << endl;
-    // print all the routes
+    //split the best route when the value is 0
+    vector<vector<int>> allRoutes;
+    vector<int> currentRoute;
     for (int i = 0; i < allRoutes_best_route.size()-1; i++) {
-        cout << allRoutes_best_route[i] << " ";
-
+        if (allRoutes_best_route[i] == 0) {
+            currentRoute.push_back(allRoutes_best_route[i]);
+            allRoutes.push_back(currentRoute);
+            currentRoute.clear();
+            currentRoute.push_back(allRoutes_best_route[i]);
+        } else {
+            currentRoute.push_back(allRoutes_best_route[i]);
+        }
     }
-    cout << endl;
-    cout << "weight: " << allRoutes_best_route[allRoutes_best_route.size()-1] << endl;
+    //remove the last element of the vector
+    
 
-   
+    int size;
     //print the best route
-    // for (int i = 0; i < bestRoute.size(); i++) {
-    //     cout << bestRoute[i] << " ";
-    // }
-    // cout << endl;
+    for (int i = 0; i < allRoutes.size(); i++) {
+        if (allRoutes[i].size() < 2) {
+            continue;
+        }   
+        size = allRoutes[i].size() - 1;
+        cout << "[";
+        for (int j = 0; j < (size); j++) {
+            cout << allRoutes[i][j] << " ";
+        }
+        cout << allRoutes[i][size] << "],";
+        cout << endl;
+    }
+    cout << "Weight: " << allRoutes_best_route[allRoutes_best_route.size() - 1] << endl;
 }
  
 
