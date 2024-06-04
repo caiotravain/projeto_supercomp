@@ -213,6 +213,7 @@ vector<vector<int>> gerartodasCombinacoes(vector<vector<int>> locations, int max
     if (rank == size - 1) {
         end = all_destinations.size();
     }
+    #pragma omp parallel for
     for (int i = start; i < end; i++) {
         vector<vector<int>> allPaths = findAllPaths(0, all_destinations[i], edges, locations, max_stop);
         //check if the route is valid(have all places), if not remove it
